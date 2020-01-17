@@ -1,7 +1,9 @@
 import agh.iet.cs.game.Game;
+import agh.iet.cs.game.GameState;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
 import agh.iet.cs.view.GameView;
@@ -17,26 +19,31 @@ public class Main extends Application {
     public void start(Stage stage) {
         stage.setTitle("Cybertanks 2020");
 
-        // TODO read from json or config file
         int width = 600;
         int height = 600;
         int menuWidth = 300;
 
-        GameView gameView = new GameView(width, height, menuWidth);
+        GameState gameState = new GameState();
+
+        GameView gameView = new GameView(width, height, menuWidth, gameState);
         Scene scene = new Scene(gameView, width + menuWidth, height);
 
-        // mouse management
-//        scene.addEventFilter(MouseEvent.MOUSE_PRESSED,
-//                mouseEvent -> gameView.handleClick(mouseEvent.getX(), mouseEvent.getY()));
+        Game game = new Game(gameView, gameState);
 
-        Game game = new Game(gameView);
+        // mouse management
+        scene.addEventFilter(MouseEvent.MOUSE_PRESSED,
+                mouseEvent -> {
+                    if (mouseEvent.isPrimaryButtonDown())
+                        game.handleLeftClick((int) mouseEvent.getX(), (int) mouseEvent.getY());
+                    else if (mouseEvent.isSecondaryButtonDown())
+                        game.handleRightClick((int) mouseEvent.getX(), (int) mouseEvent.getY());
+                });
 
         // different thread for calculations and visualization
         Thread thread = new Thread(() -> {
-            Runnable runnable = game::nextFrame;
+            Runnable runnable = game::changesListener;
             while (true) {
                 try {
-                    // length of 1 day
                     TimeUnit.MILLISECONDS.sleep(100);
                 } catch (InterruptedException ex) {
                     System.out.println("View thread sleep problem");

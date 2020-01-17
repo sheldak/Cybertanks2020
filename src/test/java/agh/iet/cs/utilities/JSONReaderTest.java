@@ -1,5 +1,6 @@
 package agh.iet.cs.utilities;
 
+
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
