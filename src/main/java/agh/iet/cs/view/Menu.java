@@ -31,11 +31,18 @@ public class Menu extends VBox {
     }
 
     public void updateLabel() {
-        String currPlayerString = this.gameState.getCurrentPlayer().getTeam().toString();
+        if (this.gameState.getWinner() == null) {
+            String currPlayerString = this.gameState.getCurrentPlayer().getTeam().toString();
 
-        int actionPoints = this.gameState.getCurrentPlayer().getActionPoints();
-        this.labelText = String.format("       " + currPlayerString + " player turn \n \n" +
-                                       "   %d action points left", actionPoints);
+            int actionPoints = this.gameState.getCurrentPlayer().getActionPoints();
+            this.labelText = String.format("       " + currPlayerString + " player turn \n \n" +
+                    "   %d action points left", actionPoints);
+        }
+        else {
+            String winnerString = this.gameState.getWinner().toString();
+
+            this.labelText = "  " + winnerString + " player has won";
+        }
 
         this.label.setText(this.labelText);
     }

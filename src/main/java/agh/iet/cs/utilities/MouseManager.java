@@ -32,44 +32,54 @@ public class MouseManager {
     }
 
     public void handleLeftClick(int clickX, int clickY, GameMap map) {
-        Tank tankAt = map.getBattlefield().getTank(new Position(
-                clickX / this.fieldSizeX, (this.mapHeight - clickY) / this.fieldSizeY));
+        if (clickX < this.mapWidth && clickY < mapHeight) {
+            Tank tankAt = map.getBattlefield().getTank(new Position(
+                    clickX / this.fieldSizeX, (this.mapHeight - clickY) / this.fieldSizeY));
 
-        if (tankAt != null && tankAt.getTeam() == this.gameState.getCurrentPlayer().getTeam())
-            this.gameState.selectTank(tankAt);
+            if (tankAt != null && tankAt.getTeam() == this.gameState.getCurrentPlayer().getTeam())
+                this.gameState.selectTank(tankAt);
 
-        else if (this.gameState.getSelectedTank() != null) {
-            List<Position> possibleTargets = map.getBattlefield()
-                    .getPossibleTargets(this.gameState.getSelectedTank().getPosition());
-            Position target = new Position(clickX / this.fieldSizeX, (this.mapHeight - clickY) / this.fieldSizeY);
+            else if (this.gameState.getSelectedTank() != null &&
+                    this.gameState.getSelectedTank().getTeam() == this.gameState.getCurrentPlayer().getTeam()) {
+                List<Position> possibleTargets = map.getBattlefield()
+                        .getPossibleTargets(this.gameState.getSelectedTank().getPosition());
+                Position target = new Position(clickX / this.fieldSizeX, (this.mapHeight - clickY) / this.fieldSizeY);
 
-            if (possibleTargets.contains(target) && this.gameState.getCurrentPlayer().canShoot()) {
-                this.gameState.getSelectedTank().setTarget(target);
-                this.gameState.getCurrentPlayer().shoot();
+                if (possibleTargets.contains(target) && this.gameState.getCurrentPlayer().canShoot()) {
+                    this.gameState.getSelectedTank().setTarget(target);
+                    this.gameState.getCurrentPlayer().shoot();
 
-                this.gameState.newChangesToDraw();
+                    this.gameState.newChangesToDraw();
 
-                if (this.gameState.getCurrentPlayer().hasNoActionPoints())
-                    this.gameState.changePlayer();
+                    if (this.gameState.getCurrentPlayer().hasNoActionPoints()) {
+                        this.gameState.changePlayer();
+                        map.getBattlefield().checkShot(this.gameState);
+                    }
+                }
             }
         }
     }
 
     public void handleRightClick(int clickX, int clickY, GameMap map) {
-        if (this.gameState.getSelectedTank() != null) {
-            Map<Position, Integer> possibleMoves = map.getBattlefield().getPossibleMoves(
-                    this.gameState.getSelectedTank().getPosition(), this.gameState.getCurrentPlayer().getActionPoints());
+        if (clickX < this.mapWidth && clickY < mapHeight) {
+            if (this.gameState.getSelectedTank() != null &&
+                    this.gameState.getSelectedTank().getTeam() == this.gameState.getCurrentPlayer().getTeam()) {
+                Map<Position, Integer> possibleMoves = map.getBattlefield().getPossibleMoves(
+                        this.gameState.getSelectedTank().getPosition(), this.gameState.getCurrentPlayer().getActionPoints());
 
-            Position moveDirection = new Position(
-                    clickX / this.fieldSizeX, (this.mapHeight - clickY) / this.fieldSizeY);
+                Position moveDirection = new Position(
+                        clickX / this.fieldSizeX, (this.mapHeight - clickY) / this.fieldSizeY);
 
-            if (possibleMoves.containsKey(moveDirection)) {
-                map.getBattlefield().moveTank(this.gameState.getSelectedTank(), moveDirection);
-                this.gameState.getCurrentPlayer().useActionPoints(possibleMoves.get(moveDirection));
+                if (possibleMoves.containsKey(moveDirection)) {
+                    map.getBattlefield().moveTank(this.gameState.getSelectedTank(), moveDirection);
+                    this.gameState.getCurrentPlayer().useActionPoints(possibleMoves.get(moveDirection));
 
-                this.gameState.newChangesToDraw();
-                if (this.gameState.getCurrentPlayer().hasNoActionPoints())
-                    this.gameState.changePlayer();
+                    this.gameState.newChangesToDraw();
+                    if (this.gameState.getCurrentPlayer().hasNoActionPoints()) {
+                        this.gameState.changePlayer();
+                        map.getBattlefield().checkShot(this.gameState);
+                    }
+                }
             }
         }
     }

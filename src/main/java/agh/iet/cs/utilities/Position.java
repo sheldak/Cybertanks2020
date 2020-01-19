@@ -30,6 +30,10 @@ public class Position {
         return new Position(this.x + other.x, this.y + other.y);
     }
 
+    public boolean isOnTheMap(int mapSizeX, int mapSizeY) {
+        return this.x >= 0 && this.x < mapSizeX && this.y >= 0 && this.y < mapSizeY;
+    }
+
     public int getX() {
         return this.x;
     }

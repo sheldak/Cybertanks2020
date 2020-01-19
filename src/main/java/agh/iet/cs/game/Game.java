@@ -45,6 +45,8 @@ public class Game {
 
     public void changesListener() {
         if (this.gameState.areChangesToDraw()) {
+            this.map.getBattlefield().checkWinner(this.gameState);
+
             this.gameView.updateView(this.map);
             this.gameState.changesDrawn();
         }

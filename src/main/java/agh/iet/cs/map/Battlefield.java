@@ -1,6 +1,7 @@
 package agh.iet.cs.map;
 
 import agh.iet.cs.fields.*;
+import agh.iet.cs.game.GameState;
 import agh.iet.cs.player.Tank;
 import agh.iet.cs.player.Team;
 import agh.iet.cs.utilities.JSONReader;
@@ -78,6 +79,62 @@ public class Battlefield {
         return false;
     }
 
+    public void checkShot(GameState gameState) {
+        List<Tank> currPlayerTanks;
+
+        if (gameState.getCurrentPlayer().getTeam() == Team.RED)
+            currPlayerTanks = this.redTanks;
+        else
+            currPlayerTanks = this.blueTanks;
+
+        Position explosionPosition = null;
+        for (Tank tank : currPlayerTanks) {
+            if (tank.getTarget() != null) {
+                explosionPosition = tank.getTarget();
+
+                if(currPlayerTanks.contains(tank))
+                    tank.resetTarget();
+            }
+        }
+
+        if (explosionPosition != null)
+            this.explode(explosionPosition);
+    }
+
+    public void explode(Position position) {
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                Position offsetPos = new Position(x, y);
+                Position explosionPos = position.add(offsetPos);
+
+                if (explosionPos.isOnTheMap(this.sizeX, this.sizeY)) {
+                    Field fieldAt = this.fieldAt(explosionPos);
+                    if (fieldAt instanceof DestructibleWall)
+                        this.fields[explosionPos.getX()][explosionPos.getY()] = new Plain(explosionPos);
+                    else if (fieldAt instanceof Plain) {
+                        Tank tankAt = ((Plain) fieldAt).getTank();
+
+                        if (tankAt != null) {
+                            if (this.redTanks.contains(tankAt))
+                                this.redTanks.remove(tankAt);
+                            else
+                                this.blueTanks.remove(tankAt);
+
+                            ((Plain) fieldAt).removeTank();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void checkWinner(GameState gameState) {
+        if (this.blueTanks.isEmpty())
+            gameState.setWinner(Team.RED);
+        else if (this.redTanks.isEmpty())
+            gameState.setWinner(Team.BLUE);
+    }
+
     public Map<Position, Integer> getPossibleMoves(Position position, int actionPoints) {
         Map<Position, Integer> possibleMoves = new HashMap<>();
 
@@ -99,8 +156,7 @@ public class Battlefield {
 
                     Position neighPosition = currPosition.add(neighbor);
 
-                    if (neighPosition.getX() >= 0 && neighPosition.getX() < this.sizeX
-                            && neighPosition.getY() > 0 && neighPosition.getY() < this.sizeY) {
+                    if (neighPosition.isOnTheMap(this.sizeX, this.sizeY)) {
 
                         if (this.fieldAt(neighPosition) instanceof Plain
                                 && ((Plain) this.fieldAt(neighPosition)).getTank() == null
@@ -130,32 +186,32 @@ public class Battlefield {
         for (int x = posX - 1; x >= 0 && !stopSearchingLeft; x--) {
             if (this.fields[x][posY] instanceof Wall)
                 stopSearchingLeft = true;
-
-            possibleTargets.add(new Position(x, posY));
+            else if (!(this.fields[x][posY] instanceof River))
+                possibleTargets.add(new Position(x, posY));
         }
 
         // right side of the tank
         for (int x = posX + 1; x < this.sizeX && !stopSearchingRight; x++) {
             if (this.fields[x][posY] instanceof Wall)
                 stopSearchingRight = true;
-
-            possibleTargets.add(new Position(x, posY));
+            else if (!(this.fields[x][posY] instanceof River))
+                possibleTargets.add(new Position(x, posY));
         }
 
         // above the tank
         for (int y = posY + 1; y < sizeY && !stopSearchingUp; y++) {
             if (this.fields[posX][y] instanceof Wall)
                 stopSearchingUp = true;
-
-            possibleTargets.add(new Position(posX, y));
+            else if (!(this.fields[posX][y] instanceof River))
+                possibleTargets.add(new Position(posX, y));
         }
 
         // below the tank
         for (int y = posY - 1; y >= 0 && !stopSearchingDown; y--) {
             if (this.fields[posX][y] instanceof Wall)
                 stopSearchingDown = true;
-
-            possibleTargets.add(new Position(posX, y));
+            else if (!(this.fields[posX][y] instanceof River))
+                possibleTargets.add(new Position(posX, y));
         }
 
         return possibleTargets;

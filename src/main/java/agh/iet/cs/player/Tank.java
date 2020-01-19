@@ -17,6 +17,12 @@ public class Tank {
         this.target = null;
     }
 
+    public boolean equals(Object other) {
+        if (other instanceof Tank && ((Tank) other).getPosition() == this.position)
+            return true;
+        return false;
+    }
+
     public void setTarget(Position position) {
         this.target = position;
     }
